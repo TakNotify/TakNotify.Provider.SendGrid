@@ -1,6 +1,6 @@
 param(
     [Parameter()]
-    [string]$VersionPrefix = "1.1.0",
+    [string]$VersionPrefix = "1.2.0",
 
     [Parameter()]
     [int]$BuildNumber = 0,

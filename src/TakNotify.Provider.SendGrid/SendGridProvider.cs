@@ -16,6 +16,7 @@ namespace TakNotify
     public class SendGridProvider : NotificationProvider
     {
         private readonly ISendGridClient _sendGridClient;
+        private readonly SendGridOptions _sendGridOptions;
 
         /// <summary>
         /// Instantiate the <see cref="SendGridProvider"/>
@@ -26,6 +27,7 @@ namespace TakNotify
             : base(sendGridOptions, loggerFactory)
         {
             _sendGridClient = new SendGridClient(sendGridOptions.Apikey);
+            _sendGridOptions = sendGridOptions;
         }
 
         /// <summary>
@@ -48,6 +50,22 @@ namespace TakNotify
             : base(sendGridOptions.Value, loggerFactory)
         {
             _sendGridClient = new SendGridClient(sendGridOptions.Value.Apikey);
+            _sendGridOptions = sendGridOptions.Value;
+        }
+
+        /// <summary>
+        /// Instantiate the <see cref="SendGridProvider"/>
+        /// <para>Please be aware in using this constructor because it was originally intended for testing and it could cause
+        /// unwanted behavior if it is used in the real application</para>
+        /// </summary>
+        /// <param name="sendGridClient">The <see cref="ISendGridClient"/> object</param>
+        /// <param name="sendGridOptions">The options for this provider</param>
+        /// <param name="loggerFactory">The logger factory</param>
+        public SendGridProvider(SendGridOptions sendGridOptions, ISendGridClient sendGridClient, ILoggerFactory loggerFactory)
+            : base(sendGridOptions, loggerFactory)
+        {
+            _sendGridClient = sendGridClient;
+            _sendGridOptions = sendGridOptions;
         }
 
         /// <inheritdoc cref="NotificationProvider.Name"/>
@@ -58,7 +76,14 @@ namespace TakNotify
         {
             var sgMessage = new SendGridMessage(messageParameters);
 
-            var from = new EmailAddress(sgMessage.FromAddress);
+            EmailAddress from = null;
+            if (!string.IsNullOrEmpty(sgMessage.FromAddress))
+                from = new EmailAddress(sgMessage.FromAddress);
+            else if (_sendGridOptions != null && !string.IsNullOrEmpty(_sendGridOptions.DefaultFromAddress))
+                from = new EmailAddress(_sendGridOptions.DefaultFromAddress);
+            else
+                return new NotificationResult(new List<string> { "From Address should not be empty" });
+
             var tos = sgMessage.ToAddresses.Select(to => new EmailAddress(to)).ToList();
             var subject = sgMessage.Subject;
             var plainTextContent = sgMessage.PlainContent;

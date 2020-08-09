@@ -81,5 +81,45 @@ namespace TakNotify.Provider.SendGrid.Test
             var endMessage = LoggerHelper.FormatLogValues(SendGridLogMessages.Sending_End, message.Subject, message.ToAddresses);
             _logger.VerifyLog(LogLevel.Debug, endMessage, Times.Never());
         }
+
+        [Fact]
+        public async void Send_WithDefaultFromAddress_Success()
+        {
+            _sendGridClient.Setup(client => client.SendEmailAsync(It.IsAny<SGMail.SendGridMessage>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Response(System.Net.HttpStatusCode.Accepted, null, null));
+
+            var provider = new SendGridProvider(
+                new SendGridOptions { DefaultFromAddress = "sender@example.com" },
+                _sendGridClient.Object,
+                _loggerFactory.Object);
+
+            var message = new SendGridMessage
+            {
+                ToAddresses = new List<string> { "user@example.com" },
+                Subject = "Test Email"
+            };
+
+            var result = await provider.Send(message.ToParameters());
+
+            Assert.True(result.IsSuccess);
+            Assert.Empty(result.Errors);
+        }
+
+        [Fact]
+        public async void Send_WithoutFromAddress_ReturnError()
+        {
+            var provider = new SendGridProvider(_sendGridClient.Object, _loggerFactory.Object);
+
+            var message = new SendGridMessage
+            {
+                ToAddresses = new List<string> { "user@example.com" },
+                Subject = "Test Email"
+            };
+
+            var result = await provider.Send(message.ToParameters());
+
+            Assert.False(result.IsSuccess);
+            Assert.Equal("From Address should not be empty", result.Errors[0]);
+        }
     }
 }
