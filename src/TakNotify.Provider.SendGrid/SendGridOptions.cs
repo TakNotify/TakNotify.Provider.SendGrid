@@ -8,6 +8,7 @@ namespace TakNotify
     public class SendGridOptions : NotificationProviderOptions
     {
         internal static string Parameter_ApiKey = $"{SendGridConstants.DefaultName}_{nameof(Apikey)}";
+        internal static string Parameter_DefaultFromAddress = $"{SendGridConstants.DefaultName}_{nameof(DefaultFromAddress)}";
 
         /// <summary>
         /// Instantiate the <see cref="SendGridOptions"/>
@@ -15,6 +16,7 @@ namespace TakNotify
         public SendGridOptions()
         {
             Parameters.Add(Parameter_ApiKey, "");
+            Parameters.Add(Parameter_DefaultFromAddress, "");
         }
 
         /// <summary>
@@ -24,6 +26,15 @@ namespace TakNotify
         {
             get => Parameters[Parameter_ApiKey].ToString();
             set => Parameters[Parameter_ApiKey] = value;
+        }
+
+        /// <summary>
+        /// The default "From Address" that will be used if the <see cref="SendGridMessage.FromAddress"/> is empty
+        /// </summary>
+        public string DefaultFromAddress
+        {
+            get => Parameters[Parameter_DefaultFromAddress].ToString();
+            set => Parameters[Parameter_DefaultFromAddress] = value;
         }
     }
 }
